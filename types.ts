@@ -11,7 +11,7 @@ export type SearchQuery = string & { readonly __brand: "SearchQuery" };
 
 export type WebFetchFormat = "markdown" | "text" | "html";
 export type SearchDepth = "auto" | "fast" | "deep";
-export type SearchProviderName = "exa";
+export type SearchProviderName = "exa" | "parallel";
 export type ContentKind = "html" | "text" | "raster-image" | "svg" | "binary";
 
 export type ParsePublicHttpUrlError =

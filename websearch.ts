@@ -3,6 +3,7 @@ import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { createOperationSignal, isOperationTimeoutError } from "./network.ts";
 import { FetchHttpTextClient, ExaSearchProvider } from "./providers/exa.ts";
+import { ParallelSearchProvider } from "./providers/parallel.ts";
 import type { SearchProvider } from "./providers/types.ts";
 import { appendExpandHint, appendExpandedPreview, getTextContent } from "./render.ts";
 import { SearchWeb, type SearchWebError } from "./search-web.ts";
@@ -54,7 +55,7 @@ export function createWebSearchTool(composition?: WebSearchToolComposition) {
 			depth: Type.Optional(
 				StringEnum([...SEARCH_DEPTHS], {
 					description:
-						"Search depth. Overrides the web-tools search default depth setting. 'deep' is accepted as a compatibility alias and mapped to 'fast' for the current Exa provider.",
+						"Search depth. Overrides the web-tools search default depth setting. Provider support may vary.",
 				}),
 			),
 		}),
@@ -172,6 +173,8 @@ function createSearchProvider(settings: WebToolsSettings["search"]): SearchProvi
 	switch (settings.provider) {
 		case "exa":
 			return new ExaSearchProvider(settings.endpoint, new FetchHttpTextClient());
+		case "parallel":
+			return new ParallelSearchProvider(settings.endpoint, new FetchHttpTextClient());
 	}
 }
 

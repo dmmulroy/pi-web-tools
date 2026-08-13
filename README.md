@@ -3,7 +3,7 @@
 A [Pi](https://pi.dev) package that adds tools for fetching and searching the public web.
 
 - `webfetch` fetches one public URL as Markdown, text, raw HTML, or an inline raster image.
-- `websearch` searches the public web through an Exa MCP-compatible endpoint.
+- `websearch` searches the public web through an Exa or Parallel MCP-compatible endpoint.
 
 ## Install
 
@@ -12,6 +12,13 @@ Configure an Exa MCP-compatible endpoint, then install globally from GitHub:
 ```bash
 export PI_WEB_TOOLS_EXA_ENDPOINT="https://your-exa-endpoint.example/mcp"
 pi install git:github.com/dmmulroy/pi-web-tools
+```
+
+Or select Parallel:
+
+```bash
+export PI_WEB_TOOLS_SEARCH_PROVIDER="parallel"
+export PI_WEB_TOOLS_PARALLEL_ENDPOINT="https://your-parallel-endpoint.example/mcp"
 ```
 
 Try it for one Pi invocation without installing:
@@ -53,19 +60,26 @@ Parameters:
 Defaults and behavior:
 
 - returns up to eight results
-- uses the Exa provider through `PI_WEB_TOOLS_EXA_ENDPOINT`
+- defaults to Exa and optionally supports Parallel
 - limits provider responses to 1 MB
 - truncates large tool output and saves the complete output to a temporary file
 
 ## Configuration
 
-`websearch` requires `PI_WEB_TOOLS_EXA_ENDPOINT` to contain a public HTTP or HTTPS URL for an Exa MCP-compatible endpoint. Add it to your shell environment before starting Pi:
+`websearch` defaults to Exa and requires `PI_WEB_TOOLS_EXA_ENDPOINT` to contain a public HTTP or HTTPS URL for an Exa MCP-compatible endpoint:
 
 ```bash
 export PI_WEB_TOOLS_EXA_ENDPOINT="https://your-exa-endpoint.example/mcp"
 ```
 
-`webfetch` does not require this variable. Per-call arguments can override `webfetch.format`, `webfetch.timeout`, `websearch.maxResults`, and `websearch.depth`.
+To use Parallel instead:
+
+```bash
+export PI_WEB_TOOLS_SEARCH_PROVIDER="parallel"
+export PI_WEB_TOOLS_PARALLEL_ENDPOINT="https://your-parallel-endpoint.example/mcp"
+```
+
+`webfetch` does not require these variables. Per-call arguments can override `webfetch.format`, `webfetch.timeout`, `websearch.maxResults`, and `websearch.depth`.
 
 ## Development
 

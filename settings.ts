@@ -9,7 +9,7 @@ import {
 
 export const WEB_FETCH_FORMATS = ["markdown", "text", "html"] as const satisfies readonly WebFetchFormat[];
 export const SEARCH_DEPTHS = ["auto", "fast", "deep"] as const satisfies readonly SearchDepth[];
-export const SEARCH_PROVIDERS = ["exa"] as const satisfies readonly SearchProviderName[];
+export const SEARCH_PROVIDERS = ["exa", "parallel"] as const satisfies readonly SearchProviderName[];
 
 export const FETCH_TIMEOUT_SECONDS = {
 	default: 30,
@@ -93,6 +93,8 @@ export function parseEnumSetting<T extends string>(
 }
 
 export const EXA_ENDPOINT_ENVIRONMENT_VARIABLE = "PI_WEB_TOOLS_EXA_ENDPOINT";
+export const SEARCH_PROVIDER_ENVIRONMENT_VARIABLE = "PI_WEB_TOOLS_SEARCH_PROVIDER";
+export const PARALLEL_ENDPOINT_ENVIRONMENT_VARIABLE = "PI_WEB_TOOLS_PARALLEL_ENDPOINT";
 
 /** Return web fetch settings that do not depend on search provider configuration. */
 export function getWebFetchSettings(): WebToolsSettings["fetch"] {
@@ -106,32 +108,38 @@ export function getWebFetchSettings(): WebToolsSettings["fetch"] {
 	};
 }
 
-/** Parse Exa search settings from the process environment. */
+/** Parse search provider settings from the process environment. */
 export function getWebSearchSettings(
 	environment: Readonly<Record<string, string | undefined>> = process.env,
 ): WebToolsSettings["search"] {
-	const endpoint = environment[EXA_ENDPOINT_ENVIRONMENT_VARIABLE];
+	const provider = parseEnumSetting(
+		environment[SEARCH_PROVIDER_ENVIRONMENT_VARIABLE],
+		SEARCH_PROVIDERS,
+		DEFAULTS.searchProvider,
+	);
+	const endpointVariable = provider === "parallel"
+		? PARALLEL_ENDPOINT_ENVIRONMENT_VARIABLE
+		: EXA_ENDPOINT_ENVIRONMENT_VARIABLE;
+	const endpoint = environment[endpointVariable];
 	if (!endpoint?.trim()) {
-		throw new Error(
-			`Pi Web Tools configuration error: ${EXA_ENDPOINT_ENVIRONMENT_VARIABLE} is required for websearch`,
-		);
+		throw new Error(`Pi Web Tools configuration error: ${endpointVariable} is required for websearch`);
 	}
 
 	return {
 		enabled: true,
-		provider: DEFAULTS.searchProvider,
-		endpoint: parseExaEndpoint(endpoint),
+		provider,
+		endpoint: parseSearchEndpoint(endpoint, endpointVariable),
 		timeoutSeconds: DEFAULTS.searchTimeoutSeconds,
 		defaultMaxResults: DEFAULTS.searchDefaultMaxResults,
 		defaultDepth: DEFAULTS.searchDefaultDepth,
 	};
 }
 
-function parseExaEndpoint(input: string): PublicHttpUrl {
+function parseSearchEndpoint(input: string, environmentVariable: string): PublicHttpUrl {
 	const parsed = parsePublicHttpUrl(input);
 	if (parsed._tag === "err") {
 		throw new Error(
-			`Pi Web Tools configuration error: ${EXA_ENDPOINT_ENVIRONMENT_VARIABLE} must be a public HTTP or HTTPS URL`,
+			`Pi Web Tools configuration error: ${environmentVariable} must be a public HTTP or HTTPS URL`,
 		);
 	}
 	return parsed.value;

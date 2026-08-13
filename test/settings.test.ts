@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
 	EXA_ENDPOINT_ENVIRONMENT_VARIABLE,
+	PARALLEL_ENDPOINT_ENVIRONMENT_VARIABLE,
+	SEARCH_PROVIDER_ENVIRONMENT_VARIABLE,
 	getWebFetchSettings,
 	getWebSearchSettings,
 	parseEnumSetting,
@@ -39,6 +41,16 @@ test("web search settings parse the Exa endpoint environment variable", () => {
 	});
 
 	assert.equal(settings.endpoint, "https://example.test/mcp");
+});
+
+test("web search settings parse Parallel provider configuration", () => {
+	const settings = getWebSearchSettings({
+		[SEARCH_PROVIDER_ENVIRONMENT_VARIABLE]: "parallel",
+		[PARALLEL_ENDPOINT_ENVIRONMENT_VARIABLE]: "https://example.test/parallel",
+	});
+
+	assert.equal(settings.provider, "parallel");
+	assert.equal(settings.endpoint, "https://example.test/parallel");
 });
 
 test("web search settings require a configured Exa endpoint", () => {
