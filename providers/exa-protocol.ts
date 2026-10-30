@@ -2,8 +2,6 @@ import { err, ok, type Result } from "../result.ts";
 import type { SearchDepth } from "../types.ts";
 import type { SearchProviderRequest } from "./types.ts";
 
-const DEFAULT_CONTEXT_MAX_CHARACTERS = 2_000;
-
 export type ExaDepth = "auto" | "fast";
 
 export interface ExaMcpRequestDto {
@@ -14,10 +12,8 @@ export interface ExaMcpRequestDto {
 		readonly name: "web_search_exa";
 		readonly arguments: {
 			readonly query: string;
-			readonly type: ExaDepth;
+			readonly objective: string;
 			readonly numResults: number;
-			readonly livecrawl: "fallback";
-			readonly contextMaxCharacters: number;
 		};
 	};
 }
@@ -46,10 +42,8 @@ export function encodeExaSearchRequest(input: SearchProviderRequest): ExaMcpRequ
 			name: "web_search_exa",
 			arguments: {
 				query: input.query,
-				type: normalizeExaDepth(input.depth),
+				objective: input.query,
 				numResults: input.maxResults,
-				livecrawl: "fallback",
-				contextMaxCharacters: DEFAULT_CONTEXT_MAX_CHARACTERS,
 			},
 		},
 	};

@@ -32,7 +32,7 @@ class RecordingHttpTextClient implements HttpTextClient {
 	}
 }
 
-test("ExaSearchProvider sends fast when deep is requested", async () => {
+test("ExaSearchProvider sends the current Exa MCP argument shape", async () => {
 	const http = new RecordingHttpTextClient(
 		ok({
 			status: 200,
@@ -54,7 +54,7 @@ test("ExaSearchProvider sends fast when deep is requested", async () => {
 	assert.equal(result.value.length, 1);
 	const requestBody = http.requests[0]?.body;
 	assert.ok(isEncodedExaRequest(requestBody));
-	assert.equal(requestBody.params.arguments.type, "fast");
+	assert.deepEqual(requestBody.params.arguments, { query: "example", objective: "example", numResults: 5 });
 });
 
 test("ExaSearchProvider returns safe provider errors", async () => {
@@ -81,7 +81,7 @@ test("ExaSearchProvider returns safe provider errors", async () => {
 	});
 });
 
-function isEncodedExaRequest(value: unknown): value is { readonly params: { readonly arguments: { readonly type: string } } } {
+function isEncodedExaRequest(value: unknown): value is { readonly params: { readonly arguments: unknown } } {
 	return (
 		typeof value === "object" &&
 		value !== null &&
@@ -90,8 +90,6 @@ function isEncodedExaRequest(value: unknown): value is { readonly params: { read
 		value.params !== null &&
 		"arguments" in value.params &&
 		typeof value.params.arguments === "object" &&
-		value.params.arguments !== null &&
-		"type" in value.params.arguments &&
-		typeof value.params.arguments.type === "string"
+		value.params.arguments !== null
 	);
 }
