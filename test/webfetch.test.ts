@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { initTheme } from "@earendil-works/pi-coding-agent";
 import {
 	createWebFetchTool,
 	createWebFetchHeaders,
@@ -8,6 +9,38 @@ import {
 	OPENCODE_WEBFETCH_FALLBACK_USER_AGENT,
 	shouldRetryWithFallbackUserAgent,
 } from "../webfetch.ts";
+
+initTheme(undefined, false);
+
+const renderTheme = {
+	fg: (_name: string, value: string) => value,
+	bold: (value: string) => value,
+};
+
+test("webfetch renderResult prefers host key hints for collapsed results", () => {
+	const tool = createWebFetchTool();
+	const calls: Array<[string, string]> = [];
+	const result = { content: [{ type: "text", text: "Fetched content" }] };
+
+	const collapsed = tool.renderResult(result, { expanded: false, isPartial: false }, renderTheme, {
+		keyHint(keybinding, description) {
+			calls.push([keybinding, description]);
+			return "HOST ctrl+o for details";
+		},
+	});
+	assert.match(collapsed.render(200).join("\n"), /✓ Fetched HOST ctrl\+o for details/);
+	assert.deepEqual(calls, [["app.tools.expand", "for details"]]);
+
+	const fallback = tool.renderResult(result, { expanded: false, isPartial: false }, renderTheme);
+	assert.match(fallback.render(200).join("\n"), /✓ Fetched/);
+
+	const expanded = tool.renderResult(result, { expanded: true, isPartial: false }, renderTheme, {
+		keyHint() {
+			assert.fail("expanded results must not request a key hint");
+		},
+	});
+	assert.match(expanded.render(200).join("\n"), /Fetched content/);
+});
 
 test("webfetch execute rejects URL credentials with a safe message", async () => {
 	const tool = createWebFetchTool();

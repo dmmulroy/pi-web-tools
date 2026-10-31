@@ -5,7 +5,7 @@ import { createOperationSignal, isOperationTimeoutError } from "./network.ts";
 import { FetchHttpTextClient, ExaSearchProvider } from "./providers/exa.ts";
 import { ParallelSearchProvider } from "./providers/parallel.ts";
 import type { SearchProvider } from "./providers/types.ts";
-import { appendExpandHint, appendExpandedPreview, getTextContent } from "./render.ts";
+import { appendExpandHint, appendExpandedPreview, getTextContent, type ExpandHintContext } from "./render.ts";
 import { SearchWeb, type SearchWebError } from "./search-web.ts";
 import { getWebSearchSettings, SEARCH_DEPTHS, type ToolInputParseError } from "./settings.ts";
 import {
@@ -125,6 +125,7 @@ export function createWebSearchTool(composition?: WebSearchToolComposition) {
 			result: { content: Array<{ type: string; text?: string }>; details?: WebSearchDetails; isError?: boolean },
 			options: { expanded: boolean; isPartial: boolean },
 			theme: RenderTheme,
+			context?: ExpandHintContext,
 		) {
 			if (options.isPartial) {
 				return new Text(theme.fg("warning", "Searching..."), 0, 0);
@@ -141,7 +142,7 @@ export function createWebSearchTool(composition?: WebSearchToolComposition) {
 			if (details?.truncated) {
 				text += theme.fg("warning", " [truncated]");
 			}
-			text = appendExpandHint(text, options.expanded);
+			text = appendExpandHint(text, options.expanded, context);
 
 			if (options.expanded) {
 				text = appendExpandedPreview(text, getTextContent(result.content), theme, { maxLines: 16, maxColumns: 220 });

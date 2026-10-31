@@ -4,7 +4,7 @@ import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 import { FetchPage, type FetchPageError } from "./fetch-page.ts";
 import { createOperationSignal, FetchPublicWebClient, isOperationTimeoutError } from "./network.ts";
-import { appendExpandHint, appendExpandedPreview, getTextContent } from "./render.ts";
+import { appendExpandHint, appendExpandedPreview, getTextContent, type ExpandHintContext } from "./render.ts";
 import { getWebFetchSettings, WEB_FETCH_FORMATS, type ToolInputParseError } from "./settings.ts";
 import {
 	TempFileToolOutputStore,
@@ -122,6 +122,7 @@ export function createWebFetchTool(composition?: WebFetchToolComposition) {
 			result: { content: Array<{ type: string; text?: string }>; details?: WebFetchDetails; isError?: boolean },
 			options: { expanded: boolean; isPartial: boolean },
 			theme: RenderTheme,
+			context?: ExpandHintContext,
 		) {
 			if (options.isPartial) {
 				return new Text(theme.fg("warning", "Fetching..."), 0, 0);
@@ -144,7 +145,7 @@ export function createWebFetchTool(composition?: WebFetchToolComposition) {
 			if (details?.image) {
 				text += theme.fg("muted", " [image]");
 			}
-			text = appendExpandHint(text, options.expanded);
+			text = appendExpandHint(text, options.expanded, context);
 
 			if (options.expanded) {
 				if (details?.image) {

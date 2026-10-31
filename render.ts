@@ -28,7 +28,14 @@ export function appendExpandedPreview(
 	return base;
 }
 
-export function appendExpandHint(base: string, expanded: boolean): string {
+// Subset of Pi's ToolRenderContext. Hosts with earendil-works/pi#11630 pass keyHint; older hosts do not.
+// `expanded` exists on every host context and keeps this assignable from older ToolRenderContext types.
+export interface ExpandHintContext {
+	expanded?: boolean;
+	keyHint?: (keybinding: "app.tools.expand", description: string) => string;
+}
+
+export function appendExpandHint(base: string, expanded: boolean, context?: ExpandHintContext): string {
 	if (expanded) return base;
-	return `${base} ${keyHint("app.tools.expand" as any, "for details")}`;
+	return `${base} ${context?.keyHint ? context.keyHint("app.tools.expand", "for details") : keyHint("app.tools.expand" as any, "for details")}`;
 }
