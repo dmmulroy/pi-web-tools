@@ -40,6 +40,13 @@ export interface HttpTextClient {
 	): Promise<Result<HttpTextResponse, HttpClientError>>;
 }
 
+/**
+ * Explicit User-Agent for search provider requests. Without it, the runtime default leaks
+ * through: inside the pi CLI global fetch is npm undici (`User-Agent: undici`), which
+ * Parallel's free tier hard-rejects with HTTP 429.
+ */
+export const SEARCH_USER_AGENT = "pi-web-tools (+https://github.com/dmmulroy/pi-web-tools)";
+
 export class FetchHttpTextClient implements HttpTextClient {
 	/** Post a JSON request and return bounded response text. */
 	async postJson(
@@ -49,7 +56,7 @@ export class FetchHttpTextClient implements HttpTextClient {
 		try {
 			const response = await fetch(request.url, {
 				method: "POST",
-				headers: request.headers,
+				headers: { "user-agent": SEARCH_USER_AGENT, ...request.headers },
 				body: JSON.stringify(request.body),
 				signal: options.signal,
 			});

@@ -66,3 +66,49 @@ test("ParallelSearchProvider sends web_search and parses structured results", as
 		},
 	});
 });
+
+test("ParallelSearchProvider surfaces JSON-RPC error messages instead of 'invalid response'", async () => {
+	const endpoint = parsePublicHttpUrl("https://example.test/mcp");
+	const query = parseSearchQuery("anything");
+	assert.equal(endpoint._tag, "ok");
+	assert.equal(query._tag, "ok");
+	const http = new RecordingHttpTextClient(ok({
+		status: 200,
+		statusText: "OK",
+		headers: new Headers({ "content-type": "application/json" }),
+		bodyText: JSON.stringify({
+			jsonrpc: "2.0",
+			id: 1,
+			error: { code: -32000, message: "You've hit the free-tier rate limit for Parallel MCP." },
+		}),
+		bytes: 100,
+	}));
+
+	const result = await new ParallelSearchProvider(endpoint.value, http)
+		.search({ query: query.value, maxResults: 5, depth: "auto" });
+
+	assert.equal(result._tag, "err");
+	assert.equal(result.error._tag, "SearchProviderReturnedError");
+	assert.match((result.error as { safeMessage: string }).safeMessage, /free-tier rate limit/);
+});
+
+test("ParallelSearchProvider surfaces the provider message on HTTP 429", async () => {
+	const endpoint = parsePublicHttpUrl("https://example.test/mcp");
+	const query = parseSearchQuery("anything");
+	assert.equal(endpoint._tag, "ok");
+	assert.equal(query._tag, "ok");
+	const http = new RecordingHttpTextClient(ok({
+		status: 429,
+		statusText: "Too Many Requests",
+		headers: new Headers({ "content-type": "application/json" }),
+		bodyText: JSON.stringify({ error: { code: -32000, message: "You've hit the free-tier rate limit for Parallel MCP." } }),
+		bytes: 100,
+	}));
+
+	const result = await new ParallelSearchProvider(endpoint.value, http)
+		.search({ query: query.value, maxResults: 5, depth: "auto" });
+
+	assert.equal(result._tag, "err");
+	assert.equal(result.error._tag, "SearchProviderReturnedError");
+	assert.match((result.error as { safeMessage: string }).safeMessage, /429.*free-tier rate limit/);
+});

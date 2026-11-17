@@ -53,7 +53,20 @@ export class ParallelSearchProvider implements SearchProvider {
 
 		if (response._tag === "err") return err(mapHttpClientError(response.error));
 		if (response.value.status < 200 || response.value.status >= 300) {
+			const providerMessage = extractParallelErrorMessage(response.value.bodyText);
+			if (providerMessage) {
+				return err({
+					_tag: "SearchProviderReturnedError",
+					provider: this.name,
+					safeMessage: `Search request failed (${response.value.status}): ${providerMessage}`,
+				});
+			}
 			return err({ _tag: "SearchProviderStatusRejected", provider: this.name, status: response.value.status });
+		}
+
+		const rpcErrorMessage = extractParallelErrorMessage(response.value.bodyText);
+		if (rpcErrorMessage) {
+			return err({ _tag: "SearchProviderReturnedError", provider: this.name, safeMessage: `Parallel: ${rpcErrorMessage}` });
 		}
 
 		const parsed = parseParallelResponse(response.value.bodyText);
@@ -62,6 +75,22 @@ export class ParallelSearchProvider implements SearchProvider {
 		}
 		return ok(parsed.value.slice(0, input.maxResults));
 	}
+}
+
+const MAX_PROVIDER_ERROR_MESSAGE_CHARS = 400;
+
+/** Extract `error.message` from a Parallel (JSON-RPC style) error body, if present. */
+function extractParallelErrorMessage(body: string): string | undefined {
+	let envelope: unknown;
+	try {
+		envelope = JSON.parse(body);
+	} catch {
+		return undefined;
+	}
+	if (!isRecord(envelope) || !isRecord(envelope["error"])) return undefined;
+	const message = envelope["error"]["message"];
+	if (typeof message !== "string" || !message.trim()) return undefined;
+	return message.trim().slice(0, MAX_PROVIDER_ERROR_MESSAGE_CHARS);
 }
 
 function parseParallelResponse(body: string): Result<readonly NormalizedSearchResult[], string> {
